@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from flask import render_template, redirect, url_for
+from flask import render_template, redirect, url_for, request, session
+from flask.ext.login import login_user, logout_user, current_user, \
+    login_required
+from flask.ext.principal import Permission, RoleNeed
 
 from . import app, facebook
 from .models import User
+from .facebook import GraphAPI
+
+admin_permission = Permission(RoleNeed('admin'))
 
 
 @app.route('/')
@@ -13,29 +19,49 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    redirect_uri = url_for('authorized', _external=True)
-    params = {'redirect_uri': redirect_uri,
-              'scope': 'email,manage_pages'}
-    return redirect(facebook.get_authorize_url(**params))
+    if current_user.is_authenticated():
+        return redirect(url_for('index'))
+    return facebook.authorize(callback=url_for('facebook_authorized',
+        next=request.args.get('next') or request.referrer or None,
+        _external=True))
 
 
-@app.route('/authorized')
-def authorized():
-    if not 'code' in request.args:
-        return 'You declined'
+@app.route('/login/authorized')
+@facebook.authorized_handler
+def facebook_authorized(response):
+    if response is None:
+        # In a real case, this should return error message/description
+        return redirect(url_for('test'))
 
-    redirect_uri = url_for('authorized', _external=True)
-    data = dict(code=request.args['code'], redirect_uri=redirect_uri)
+    token = response['access_token']
 
-    session = facebook.get_auth_session(data=data)
+    me = GraphAPI.me(token).json()
 
-    me = session.get('me').json()
+    user = User.get_or_create(me['id'], me['name'], me['email'])
 
-    User.get_or_create(me['id'], me['username'], me['email'])
+    login_user(user)
+
+    print (current_user)
 
     return redirect(url_for('index'))
 
 
+@facebook.tokengetter
+def get_facebook_oauth_token():
+    if current_user.is_authenticated():
+        return (current_user.token, current_user.secret)
+    else:
+        return None
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+
 @app.route('/test')
+@login_required
 def test():
     return render_template('test.html')
