@@ -2,6 +2,8 @@
 
 import os
 
+from datetime import timedelta
+
 
 class Config(object):
     DEBUG = True
@@ -11,3 +13,4 @@ class Config(object):
     FACEBOOK_CONSUMER_SECRET = os.environ.get('FACEBOOK_SECRET')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    REMEMBER_COOKIE_DURATION = timedelta(days=360)
