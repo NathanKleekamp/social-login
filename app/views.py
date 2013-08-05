@@ -84,7 +84,7 @@ def load_token(token):
     '''
     Load the secure token. See http://goo.gl/UvhIgI and http://goo.gl/niOYDQ
     '''
-    # This allows us to enforce the exipry date of the token server  side and
+    # This allows us to enforce the exipry date of the token server side and
     # not rely on the users cookie to exipre.
     max_age = app.config["REMEMBER_COOKIE_DURATION"].total_seconds()
 
@@ -92,9 +92,8 @@ def load_token(token):
     data = login_serializer.loads(token, max_age=max_age)
 
     # Locate the User
-    user = User.get(data[0])
+    user = User.query.filter_by(uuid=data[0]).first()
 
-    if user:
+    if user and data[1] == user.uuid:
         return user
-
     return None

@@ -53,7 +53,8 @@ class User(db.Model):
 
         See http://goo.gl/UvhIgI and http://goo.gl/niOYDQ
         '''
-        return login_serializer.dumps(self.uuid)
+        data = [str(self.id), self.uuid]
+        return login_serializer.dumps(data)
 
     @staticmethod
     def get_or_create(fb_id, name, email):
