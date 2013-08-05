@@ -43,8 +43,7 @@ def test():
 def facebook_authorized(response):
     '''
     Get's Oauth token and User's info from Facebook, Flask-
-    Login logs in the user, Flask-Principal is notified that the user's
-    identity has been changed, and redirects to proper location.
+    Login logs in the user, and redirects to proper location.
     '''
     if response is None:
         # In a real case, this should return error message/description
