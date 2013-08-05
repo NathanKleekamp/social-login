@@ -11,6 +11,8 @@ app = Flask(__name__)
 app.config.from_object('app.conf.Config')
 db = SQLAlchemy(app)
 principals = Principal(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 oauth = OAuth()
 
@@ -26,18 +28,6 @@ facebook = oauth.remote_app('facebook',
 
 
 from . import models, views
-
-
-login_manager = LoginManager()
-login_manager.init_app(app)
-
-
-@login_manager.user_loader
-def load_user(fb_id):
-    user = db.session.query(models.User).filter(models.User.fb_id == fb_id)\
-        .first()
-    if not user:
-        return None
 
 
 @app.before_first_request

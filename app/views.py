@@ -5,7 +5,7 @@ from flask.ext.login import login_user, logout_user, current_user, \
     login_required
 from flask.ext.principal import Permission, RoleNeed
 
-from . import app, facebook
+from . import app, db, facebook, login_manager
 from .models import User
 from .facebook import GraphAPI
 
@@ -14,6 +14,7 @@ admin_permission = Permission(RoleNeed('admin'))
 
 @app.route('/')
 def index():
+    print(current_user.is_authenticated())
     return render_template('index.html')
 
 
@@ -41,7 +42,7 @@ def facebook_authorized(response):
 
     login_user(user)
 
-    print (current_user)
+    print (current_user.is_authenticated())
 
     return redirect(url_for('index'))
 
@@ -52,6 +53,16 @@ def get_facebook_oauth_token():
         return (current_user.token, current_user.secret)
     else:
         return None
+
+
+@login_manager.user_loader
+def load_user(fb_id):
+    user = db.session.query(User).filter(User.fb_id == fb_id)\
+        .first()
+    if not user:
+        return None
+    else:
+        return user
 
 
 @app.route('/logout')
