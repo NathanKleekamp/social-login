@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import hashlib
+
 from uuid import uuid4
 
 from . import db, login_serializer
+
+
+def md5(data):
+    return hashlib.md5(data).hexdigest()
 
 
 def uuid_gen():
@@ -53,7 +59,7 @@ class User(db.Model):
 
         See http://goo.gl/UvhIgI and http://goo.gl/niOYDQ
         '''
-        data = [str(self.id), self.uuid]
+        data = [str(self.fb_id), md5(self.uuid)]
         return login_serializer.dumps(data)
 
     @staticmethod

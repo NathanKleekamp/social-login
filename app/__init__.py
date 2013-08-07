@@ -23,7 +23,7 @@ login_manager.login_view = '/login'  # Has to be an absolute/relative URL
 
 # Login_serializer used to encryt and decrypt the cookie token for the remember
 # me option of Flask-Login
-login_serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+login_serializer = URLSafeTimedSerializer(app.config.get('SECRET_KEY'))
 
 
 oauth = OAuth()

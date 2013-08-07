@@ -2,10 +2,10 @@
 
 from flask import render_template, redirect, url_for, request
 from flask.ext.login import login_user, logout_user, current_user, \
-    login_required, fresh_login_required
+    login_required  # , fresh_login_required
 
-from . import app, db, facebook, login_manager, login_serializer
-from .models import User
+from . import app, facebook, login_manager, login_serializer
+from .models import User, md5
 from .facebook import GraphAPI
 
 
@@ -28,17 +28,17 @@ def login():
 def logout():
     # Tell Flask-Login the user's been logged out.
     logout_user()
-
     return redirect(url_for('index'))
 
 
 @app.route('/test')
-@fresh_login_required  # See http://goo.gl/to0oEL
+#@fresh_login_required  # See http://goo.gl/to0oEL
+@login_required
 def test():
     return render_template('test.html')
 
 
-@app.route('/login/authorized')
+@app.route('/login/authorized', methods=['GET'])
 @facebook.authorized_handler
 def facebook_authorized(response):
     '''
@@ -49,8 +49,8 @@ def facebook_authorized(response):
         # In a real case, this should return error message/description
         return redirect(url_for('index'))
 
-    token = response['access_token']
     next = request.args.get('next')
+    token = response['access_token']
 
     # Get identity from Facebook Graph
     me = GraphAPI.me(token).json()
@@ -72,11 +72,7 @@ def load_user(fb_id):
     '''
     This needs to return the user or None as required by Flask-Login
     '''
-    user = db.session.query(User).filter(User.fb_id == fb_id)\
-        .first()
-    if not user:
-        return None
-    return user
+    return User.query.filter_by(fb_id=fb_id).first()
 
 
 @login_manager.token_loader
@@ -92,8 +88,8 @@ def load_token(token):
     data = login_serializer.loads(token, max_age=max_age)
 
     # Locate the User
-    user = User.query.filter_by(uuid=data[0]).first()
+    user = User.query.filter_by(fb_id=data[0]).first()
 
-    if user and data[1] == user.uuid:
+    if user and md5(user.uuid) == data[1]:
         return user
     return None
