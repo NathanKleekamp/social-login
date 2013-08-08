@@ -58,8 +58,12 @@ def facebook_authorized(response):
     # Get or create the user
     user = User.get_or_create(me['id'], me['name'], me['email'])
 
-    # Login with Flask-Login
-    login_user(user, remember=True)
+    # Login with Flask-Login if account is active
+    if user.is_active():
+        login_user(user, remember=True)
+    else:
+        return 'Your account has been deactivated. Contact the admin for it \
+                to be reinstated.'
 
     if next:
         return redirect(next)
